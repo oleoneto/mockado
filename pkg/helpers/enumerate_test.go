@@ -5,7 +5,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/cleopatrio/mockado/pkg/helpers"
+	"github.com/oleoneto/mockado/pkg/helpers"
 )
 
 func TestEnumerateArgs(t *testing.T) {

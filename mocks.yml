@@ -1,9 +1,7 @@
 routes:
-  - name: Comments
-    path: /comments
-    methods:
-    - HEAD
-    - GET
+  - name: Comments v1
+    path: /v1/comments
+    methods: [GET]
     response:
       latency: 500ms
       status: 200
@@ -24,135 +22,103 @@ routes:
             parent_id: null
             created_at: 1740670558818
 
-  - name: Dump
-    path: /dump
-    methods:
-      - HEAD
-      - GET
+  - name: Comments v2
+    path: /v2/comments
+    methods: [GET]
+    response:
+      status: 200
+      latency: 2s
+      body:
+        comments:
+          - id: 01JN443C15HRM89PSPX0Y2D68W
+            text: I disagree 😩. They didn't even mention the best parts of the product
+            parent_id: 01JN442DXJ41VTDPEG2MRTGYGG
+            created_at: 1740671306280
+          - id: 01JN442DXJ41VTDPEG2MRTGYGG
+            text: That was an epic feedback!
+            parent_id: null
+            created_at: 1740670558818
+
+  - name: Env Dump
+    path: /env
+    methods: [HEAD, GET]
     response:
       envAsBody: true
       status: 200
 
-  # - name: CommentsV2
-  #   path: /v2/comments
-  #   method: GET
-  #   status: 200
-  #   latency: 2s
-  #   body:
-  #     comments:
-  #       - id: 01JN443C15HRM89PSPX0Y2D68W
-  #         text: I disagree 😩. They didn't even mention the best parts of the product
-  #         parent_id: 01JN442DXJ41VTDPEG2MRTGYGG
-  #         created_at: 1740671306280
-  #       - id: 01JN442DXJ41VTDPEG2MRTGYGG
-  #         text: That was an epic feedback!
-  #         parent_id: null
-  #         created_at: 1740670558818
+  - name: Hello
+    path: /hello
+    methods: [HEAD, GET]
+    response:
+      status: 200
+      headers:
+        contentType: text/html
+      body: |
+        <!doctype html>
+        <html>
+          <head>
+            <meta charset="utf-8">
+            <meta name="referrer" content="strict-origin-when-cross-origin">
+            <meta name="viewport" content="width=device-width, initial-scale=1">
+            <title>🐶 [Dog]</title>
+          </head>
+          <body>
+            <main>
+              <h1>What's up, dawg?</h1>
+            </main>
+          </body>
+        </html>
 
-  # - name: Nothing
-  #   path: /nothing
-  #   method: GET
-  #   status: 200
-  #   latency: 50ms
+  - name: "200"
+    path: /200
+    methods: [GET]
+    response:
+      status: 200
+      latency: 50ms
 
-  # - name: Home
-  #   path: /
-  #   method: POST
-  #   status: 202
-  #   latency: 2s
+  - name: "202"
+    path: /202
+    methods: [POST]
+    response:
+      status: 202
+      latency: 2s
 
-  # - name: Page
-  #   path: /hello
-  #   method: GET
-  #   statusCode: 200
-  #   contentType: text/html
-  #   body: |
-  #     <!doctype html>
-  #     <html>
-  #       <head>
-  #         <meta charset="utf-8">
-  #         <meta name="referrer" content="strict-origin-when-cross-origin">
-  #         <meta name="viewport" content="width=device-width, initial-scale=1">
-  #         <title>🐶 [acme]</title>
-  #       </head>
-  #       <body>
-  #         <main>
-  #           <h1>Hello!</h1>
-  #         </main>
-  #       </body>
-  #     </html>
+  - name: "404"
+    path: /
+    methods: [GET]
+    response:
+      status: 404
+      headers:
+        contentType: text/html
+      body: |
+        <!doctype html>
+        <html>
+          <head>
+            <meta charset="utf-8">
+            <meta name="referrer" content="strict-origin-when-cross-origin">
+            <meta name="viewport" content="width=device-width, initial-scale=1">
+            <title>😩 Path does not exist</title>
+          </head>
+          <body>
+            <main>
+              <h1>It appears you may be a little lost...</h1>
+              <img src="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExdzlmY3I2OGh4M2YwNHp1N2d2ZnVjOTR5YmlkazVkMzA4ZXNpN3BsaSZlcD12MV9naWZzX3NlYXJjaCZjdD1n/jU9OCvBiO1besabUKU/giphy.gif"></img>
+            </main>
+          </body>
+        </html>
 
-  # - name: 404
-  #   path: /
-  #   method: GET
-  #   status: 404
-  #   contentType: text/html
-  #   body: |
-  #     <!doctype html>
-  #     <html>
-  #       <head>
-  #         <meta charset="utf-8">
-  #         <meta name="referrer" content="strict-origin-when-cross-origin">
-  #         <meta name="viewport" content="width=device-width, initial-scale=1">
-  #         <title>😩 Path does not exist</title>
-  #       </head>
-  #       <body>
-  #         <main>
-  #           <h1>It appears you may be a little lost...</h1>
-  #           <img src="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExdzlmY3I2OGh4M2YwNHp1N2d2ZnVjOTR5YmlkazVkMzA4ZXNpN3BsaSZlcD12MV9naWZzX3NlYXJjaCZjdD1n/jU9OCvBiO1besabUKU/giphy.gif"></img>
-  #         </main>
-  #       </body>
-  #     </html>
-
-  # - name: Transaction Cards API
-  #   path: /v1/authorization/data
-  #   method: POST
-  #   status: 200
-  #   responseType: json
-  #   body: {
-  #     "id": "01954853-56e8-77bc-878a-84a3fefd132f",
-  #     "version": 1
-  #   }
-
-  # - name: Exchange Rates API
-  #   path: /v1/exchange-rate/daily
-  #   method: POST
-  #   status: 200
-  #   contentType: application/json
-  #   body: {
-  #     "exchange_rate": {
-  #       "rate": "5.8228",
-  #       "date_time_gmt": "2025-02-27T19:19:43Z",
-  #       "spread_percent": "5.48"
-  #     },
-  #     "conversion": {
-  #       "amount": "9.21283416",
-  #       "spread_amount": "0.47863416",
-  #       "rate_with_spread": "6.14188944"
-  #     },
-  #     "original_amount": "1.5",
-  #     "configuration_service_id": "01907dc6-f8ae-4aff-035d-12488ff1a92d",
-  #     "origin_asset_code": "840",
-  #     "dest_asset_code": "986"
-  #   }
-
+  # TODO: Implement this
   # - name: Flights
   #   # path: /flights/LAX-SFO
   #   path: /flights/:origin-:destination
-  #   method: GET
+  #   methods: [GET]
   #   accepts: application/json
   #   response:
+  #     status: 200
   #     latency: 5ms
-  #     status: 204
-  #     engine: go
   #     headers:
   #       Content-Type: application/json
   #       X-Hostname: "{{ env.HOST }}"
   #     body: |
-  #       package router
-
-  #       func Route(ctx fiber.Ctx) string {
-  #         msg := fmt.Sprintf("%s-%s\n", ctx.Params("from"), ctx.Params("to"))
-  #         fmt.Println("⚠️", msg)
-  #         return msg
-  #       }
+  #       Showing flights from {{ origin }} to {{ destination }}:
+  #       ...

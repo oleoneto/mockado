@@ -1,20 +1,5 @@
 package helpers
 
-// Contains Checks if the element is contained within the given collection.
-//
-// Example:
-//
-//	Contains([]string{"hello", "world", "!"}, "world") // -> true
-func Contains[T comparable](collection []T, element T) bool {
-	for _, item := range collection {
-		if item == element {
-			return true
-		}
-	}
-
-	return false
-}
-
 // ContainsDuplicate return true if any value appears at least twice in the given collection.
 //
 // Example:

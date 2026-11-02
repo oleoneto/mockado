@@ -4,7 +4,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/cleopatrio/mockado/pkg/helpers"
+	"github.com/oleoneto/mockado/pkg/helpers"
 )
 
 func TestUnwrapOrDefault(t *testing.T) {

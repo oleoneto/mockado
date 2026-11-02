@@ -2,43 +2,37 @@ package server
 
 import (
 	"fmt"
-	"os"
-	"strings"
 	"sync"
 	"time"
 
-	"github.com/cleopatrio/mockado/pkg/envloader"
-	"github.com/cleopatrio/mockado/pkg/helpers"
-	"github.com/cleopatrio/mockado/pkg/httpclient"
-	"github.com/cleopatrio/mockado/pkg/logger"
-	"github.com/cleopatrio/mockado/pkg/redactor"
 	"github.com/gofiber/fiber/v3"
 	flogger "github.com/gofiber/fiber/v3/middleware/logger"
 	"github.com/gofiber/fiber/v3/middleware/recover"
+	"github.com/oleoneto/mockado/pkg/envloader"
+	"github.com/oleoneto/mockado/pkg/helpers"
+	"github.com/oleoneto/mockado/pkg/httpclient"
 )
+
+type ServerConfig func(*Server)
+
+type Server struct {
+	app       *fiber.App
+	varloader *envloader.EnvLoader
+}
 
 var once sync.Once
 
 var instance *Server = &Server{}
 
-type Server struct {
-	app    *fiber.App
-	redact *redactor.Redactor
-	loader *envloader.Loader
-}
-
-func New() *Server {
+func New(options ...ServerConfig) *Server {
 	once.Do(func() {
-		app := fiber.New(fiber.Config{
-			Immutable: true,
-		})
+		app := fiber.New()
 
 		app.Use(flogger.New(
 			flogger.Config{
 				ForceColors: true,
 				Format:      flogger.JSONFormat,
 				TimeZone:    "America/Sao_Paulo",
-				// TimeFormat: flogger.,
 			},
 		))
 
@@ -47,37 +41,29 @@ func New() *Server {
 		))
 
 		instance.app = app
-		instance.redact = redactor.New()
-		instance.loader = envloader.New()
 
-		log.
-			WithField("package", "server").
-			Tracef("Called New()")
+		for _, fn := range options {
+			fn(instance)
+		}
 	})
 
 	return instance
 }
 
-func (s *Server) Listen(port int) error {
-	return s.app.Listen(
-		fmt.Sprintf("127.0.0.1:%d", port),
-		fiber.ListenConfig{
-			EnablePrintRoutes:     false,
-			DisableStartupMessage: true,
-		},
-	)
-}
-
-func (s *Server) Add(routes ...httpclient.Route) *Server {
-	for _, r := range routes {
-		s.app.Add(r.Methods, r.Path, s.route(r))
+func WithRoutes(routes ...httpclient.Route) ServerConfig {
+	return func(s *Server) {
+		for _, r := range routes {
+			s.app.Add(r.Methods, r.Path, s.setupRoute(r))
+		}
 	}
-
-	return s
 }
 
-func (s *Server) route(r httpclient.Route) func(c fiber.Ctx) error {
-	return func(c fiber.Ctx) error {
+func WithEnvLoader(el *envloader.EnvLoader) ServerConfig {
+	return func(s *Server) { s.varloader = el }
+}
+
+func (s *Server) setupRoute(r httpclient.Route) func(c fiber.Ctx) error {
+	fn := func(c fiber.Ctx) error {
 		c.Response().Header.Add("X-Request-Time", time.Now().String())
 
 		if r.Accepts != "" {
@@ -85,29 +71,15 @@ func (s *Server) route(r httpclient.Route) func(c fiber.Ctx) error {
 		}
 
 		for key, value := range r.Response.Headers {
-			c.Response().Header.Add(key, s.loader.LoadVar(value))
+			c.Response().Header.Add(key, s.varloader.LoadVar(value))
 		}
 
 		latency := helpers.UnwrapOrDefault(r.Response.Latency, 0)
-		c.Response().Header.Add("X-Latency", latency.String())
+		c.Response().Header.Add("X-Response-Latency", latency.String())
 
-		var b []byte
 		var variables map[string]string
-
 		if r.Response.EnvAsBody {
-			variables = make(map[string]string, 0)
-
-			for _, pair := range os.Environ() {
-				a := strings.SplitN(pair, "=", 2)
-				key, value := a[0], a[1]
-
-				if v, matched := s.redact.RedactKey(key); matched {
-					variables[key] = v
-					continue
-				}
-
-				variables[key] = s.redact.Redact(value)
-			}
+			variables = s.varloader.Environment()
 		}
 
 		time.Sleep(latency)
@@ -119,8 +91,38 @@ func (s *Server) route(r httpclient.Route) func(c fiber.Ctx) error {
 			return c.JSON(variables)
 		}
 
-		return c.Send(b)
+		if r.Response.Body != nil {
+			if b, ok := r.Response.Body.([]byte); ok {
+				return c.Send(b)
+			}
+		}
+
+		return c.Send([]byte(``))
 	}
+
+	return fn
 }
 
-var log = logger.GetLogger("server")
+func (s *Server) App() *fiber.App { return s.app }
+
+func (s *Server) Listen(port int, showRoutes bool) error {
+	address := "127.0.0.1"
+
+	s.app.Hooks().OnListen(func(d fiber.ListenData) error {
+		fmt.Printf("[Server] Listening on %s:%s [pid: %d]\n", address, d.Port, d.PID)
+		return nil
+	})
+
+	s.app.Hooks().OnPreShutdown(func() error {
+		fmt.Println("[Server] Shutting down")
+		return nil
+	})
+
+	return s.app.Listen(
+		fmt.Sprintf("%s:%d", address, port),
+		fiber.ListenConfig{
+			EnablePrintRoutes:     showRoutes,
+			DisableStartupMessage: true,
+		},
+	)
+}

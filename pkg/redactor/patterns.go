@@ -5,8 +5,8 @@ import "regexp"
 const RedactedPattern string = "****"
 
 type SecretPattern struct {
-	Name    string
-	Pattern []byte
+	Name    string `yaml:"name" json:"name"`
+	Pattern []byte `yaml:"pattern" json:"pattern"`
 }
 
 // DefaultPatterns is the collection of high-confidence sensitive string detectors
@@ -75,15 +75,6 @@ func DefaultPatterns() []SecretPattern {
 			Name:    "Generic Password/Key Assignment",
 			Pattern: []byte(`(?i)\b(api[_\s-]?key|secret|password|passwd|token)\b\s*[:=]\s*['\"][A-Za-z0-9_\-]{16,}['\"]`),
 		},
-		// --- PATH ---
-		SecretPattern{
-			Name:    "PATH",
-			Pattern: []byte(`\b(/.*:/?)`),
-		},
-		// --- Key name patterns ---
-		SecretPattern{
-			Pattern: []byte(`ACCESS|AUTH|AWS|AZURE|COOKIE|CRED|DB|GCP|GIT|GPG|HOME|KEY|OAUTH|PASS|PATH|PGP|PRIVATE|SECRET|SECURITY|SESSION|SHELL|SSH|TOKEN|USERNAME`),
-		},
 	}
 }
 
@@ -97,4 +88,22 @@ func compilePatterns(patterns ...SecretPattern) ([]*regexp.Regexp, error) {
 		compiled = append(compiled, re)
 	}
 	return compiled, nil
+}
+
+func (s *SecretPattern) UnmarshalYAML(unmarshal func(any) error) error {
+	type s2 SecretPattern
+
+	s3 := &struct {
+		Pattern string `yaml:"pattern"`
+		*s2
+	}{
+		s2: (*s2)(s),
+	}
+
+	if err := unmarshal(&s3); err != nil {
+		return err
+	}
+
+	s.Pattern = []byte(s3.Pattern)
+	return nil
 }

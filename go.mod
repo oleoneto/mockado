@@ -1,4 +1,4 @@
-module github.com/cleopatrio/mockado
+module github.com/oleoneto/mockado
 
 go 1.26.1
 
@@ -16,12 +16,14 @@ require (
 	github.com/sirupsen/logrus v1.9.4
 	github.com/spf13/cobra v1.10.2
 	github.com/spf13/pflag v1.0.10
+	github.com/stretchr/testify v1.11.1
 	github.com/traefik/yaegi v0.16.1
 	go.yaml.in/yaml/v4 v4.0.0-rc.4
 )
 
 require (
 	github.com/andybalholm/brotli v1.2.1 // indirect
+	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/gofiber/schema v1.7.1 // indirect
 	github.com/gofiber/utils/v2 v2.0.6 // indirect
 	github.com/google/uuid v1.6.0 // indirect
@@ -34,6 +36,7 @@ require (
 	github.com/mattn/go-isatty v0.0.22 // indirect
 	github.com/mattn/go-runewidth v0.0.16 // indirect
 	github.com/philhofer/fwd v1.2.0 // indirect
+	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
 	github.com/rogpeppe/go-internal v1.15.0 // indirect
 	github.com/tinylib/msgp v1.6.4 // indirect

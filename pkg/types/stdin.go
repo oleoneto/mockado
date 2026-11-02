@@ -4,7 +4,7 @@ import (
 	"errors"
 	"os"
 
-	"github.com/cleopatrio/mockado/pkg/helpers"
+	"github.com/oleoneto/mockado/pkg/helpers"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 )

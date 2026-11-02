@@ -10,7 +10,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/cleopatrio/mockado/pkg/dbsql"
+	"github.com/oleoneto/mockado/pkg/dbsql"
 	"github.com/spf13/cobra"
 )
 

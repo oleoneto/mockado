@@ -2,41 +2,67 @@ package mocker
 
 import (
 	"bytes"
+	"fmt"
 
-	"github.com/cleopatrio/mockado/pkg/envloader"
-	"github.com/cleopatrio/mockado/pkg/httpclient"
-	"github.com/cleopatrio/mockado/pkg/redactor"
-	"github.com/cleopatrio/mockado/pkg/server"
+	"github.com/oleoneto/mockado/pkg/envloader"
+	"github.com/oleoneto/mockado/pkg/httpclient"
+	"github.com/oleoneto/mockado/pkg/logger"
+	"github.com/oleoneto/mockado/pkg/redactor"
+	"github.com/oleoneto/mockado/pkg/server"
 	"github.com/spf13/cobra"
 	"go.yaml.in/yaml/v4"
 )
 
+var logr = logger.GetLogger()
+
 var command = &cobra.Command{
-	Use:    "mocker",
-	Short:  "Run a mock webserver based on a provided file",
-	PreRun: cflags.File.StdinHook("file"),
+	Use:   "mocker",
+	Short: "Run a mock webserver based on a provided file",
+	PreRun: func(cmd *cobra.Command, args []string) {
+		cflags.RoutesFile.StdinHook("routes-file")
+		cflags.RoutesFile.StdinHook("redactor-file")
+	},
 	Run: func(cmd *cobra.Command, args []string) {
-		data, _ := load()
+		data, err := loadRoutes()
+		if err != nil {
+			panic(err)
+		}
 
-		variableLoader = envloader.WithRedactor(redactor.New())
+		var patterns []redactor.SecretPattern
+		if !cflags.ShowSensitiveVariables {
+			patterns, err = loadRedactorPatterns()
+			if err != nil {
+				panic(err)
+			}
+		}
 
-		server := server.New()
+		r := redactor.New(
+			redactor.WithLogger(logr),
+			redactor.WithRedactedPattern("[redacted]"),
+			redactor.WithBlockedPatterns(patterns...),
+		)
 
-		server.Add(data.Routes...)
+		l := envloader.New(
+			envloader.WithLogger(logr),
+			envloader.WithRedactor(r),
+		)
 
-		server.Listen(cflags.Port)
+		server := server.New(
+			server.WithEnvLoader(l),
+			server.WithRoutes(data.Routes...),
+		)
+
+		server.Listen(cflags.Port, cflags.ShowRoutes)
 	},
 }
 
 func Execute() error { return command.Execute() }
 
-func load() (schema, error) {
-	var data schema
-
-	bf := bytes.NewBuffer(cflags.File.Data)
+func loadRoutes() (data schema, err error) {
+	bf := bytes.NewBuffer(cflags.RoutesFile.Data)
 	loader, err := yaml.NewLoader(bf)
 	if err != nil {
-		log.Fatalln("Unmarshall error:", err)
+		return
 	}
 
 	type routesFile struct {
@@ -55,8 +81,38 @@ func load() (schema, error) {
 	}
 
 	if len(data.Routes) == 0 {
-		log.Fatalln("No routes found in the provided file")
+		err = fmt.Errorf("No routes found in the provided file")
 	}
 
 	return data, nil
+}
+
+func loadRedactorPatterns() (data []redactor.SecretPattern, err error) {
+	bf := bytes.NewBuffer(cflags.RedactionPatternsFile.Data)
+	loader, err := yaml.NewLoader(bf)
+	if err != nil {
+		return
+	}
+
+	type patternsFile struct {
+		Patterns []redactor.SecretPattern `yaml:"patterns" json:"patterns"`
+	}
+
+	for {
+		var file patternsFile
+
+		err := loader.Load(&file)
+		if err != nil {
+			// logr.Errorln(err)
+			break
+		}
+
+		data = append(data, file.Patterns...)
+	}
+
+	if len(data) == 0 {
+		err = fmt.Errorf("No patterns loaded from file")
+	}
+
+	return data, err
 }

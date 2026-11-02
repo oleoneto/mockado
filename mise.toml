@@ -1,0 +1,10 @@
+[tasks.check]
+run = """
+go vet ./...
+go fmt ./...
+"""
+
+[tasks.test]
+run = """
+go test ./... -count 1
+"""

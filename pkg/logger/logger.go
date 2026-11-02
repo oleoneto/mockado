@@ -11,10 +11,10 @@ import (
 
 var logger *logrus.Logger
 
-var loggerOnce sync.Once
+var once sync.Once
 
-func GetLogger(name string) *logrus.Logger {
-	loggerOnce.Do(func() {
+func GetLogger() *logrus.Logger {
+	once.Do(func() {
 		if logger != nil {
 			return
 		}

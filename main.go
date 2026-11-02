@@ -3,9 +3,8 @@ package main
 import (
 	"os"
 
-	mocker "github.com/cleopatrio/mockado/mocker"
-	"github.com/cleopatrio/mockado/pkg/logger"
 	_ "github.com/joho/godotenv/autoload"
+	mocker "github.com/oleoneto/mockado/mocker"
 )
 
 func main() {
@@ -13,5 +12,3 @@ func main() {
 		os.Exit(1)
 	}
 }
-
-var log = logger.GetLogger("main")
